@@ -298,6 +298,13 @@ The Vite dev server proxies all `/api/*` requests to `http://127.0.0.1:5000`, so
 Parsing document...  →  Extracting metrics...  →  Running AI analysis...
 ```
 
+<img width="1900" height="858" alt="image" src="https://github.com/user-attachments/assets/9ce2974e-6efc-4f80-bbc0-070bbe1554c5" />
+
+<img width="1892" height="856" alt="image" src="https://github.com/user-attachments/assets/57d61fc5-63ab-4855-8b44-4405c8e29c7b" />
+
+<img width="1889" height="853" alt="image" src="https://github.com/user-attachments/assets/eb6f9c5e-bd95-4d5b-bee4-c7440d832551" />
+
+
 **Results dashboard** — the readiness banner at the top answers the core question immediately. The colour tells you the verdict at a glance: green for ready, amber for minor fixes needed, red for major rework. Everything below provides the supporting detail.
 
 The dashboard has three tabs:
@@ -305,6 +312,14 @@ The dashboard has three tabs:
 - **Overview** — readiness score (ring chart), migration effort by content type (bar chart), blockers and warnings, AI content analysis key-values, and visual content assessment
 - **Content Debt** — table of undefined acronyms with suggested actions, outdated references, unresolved placeholders
 - **Raw JSON** — the full API response with syntax highlighting and a one-click copy button
+
+<img width="1606" height="790" alt="image" src="https://github.com/user-attachments/assets/e25d5c1c-7c19-454e-a78b-5274c5f6d0f5" />
+
+<img width="1593" height="872" alt="image" src="https://github.com/user-attachments/assets/329ea1ee-6dbd-4930-87bb-ffc8b796ee19" />
+
+<img width="1579" height="406" alt="image" src="https://github.com/user-attachments/assets/449b8358-ccdc-4890-beff-6c86d01db980" />
+
+<img width="1575" height="671" alt="image" src="https://github.com/user-attachments/assets/555fc980-835f-4988-9004-9ef19dba8b0f" />
 
 The action bar at the bottom lets you export the complete report as a JSON file or start a new analysis.
 
