@@ -4,7 +4,7 @@ A Flask-based automation tool that answers one question for every document you u
 
 > **"Is this document ready to migrate to Document360? If not, what needs to change?"**
 
-It parses `.docx` and `.pdf` files, extracts structural metrics, and uses AI (LLaMA 3.3 70B via Groq) to produce a readiness grade, effort estimate, and specific improvement suggestions — all in a single API call.
+It parses `.docx` and `.pdf` files, extracts structural metrics, and uses AI (LLaMA 3.3 70B via Groq and Google Gemma via Openrouter) to produce a readiness grade, effort estimate, and specific improvement suggestions — all in a single API call.
 
 ---
 
@@ -12,13 +12,11 @@ It parses `.docx` and `.pdf` files, extracts structural metrics, and uses AI (LL
 
 When you upload a document, the tool runs three things in sequence:
 
-**1. Parses the document** — extracts every heading, paragraph, table, image, and link from Word and PDF files. It handles edge cases like empty documents, password-protected files, and documents with inconsistent formatting.
+**1. Parses the document** — extracts every heading, paragraph, table, image, and link from Word and PDF files.
 
-**2. Extracts metrics** — counts everything that matters for a migration: word count, page count, heading structure, broken links, image count and format, table complexity, readability score, and more. These are the numbers a migration specialist would manually audit before starting a project.
+**2. Extracts metrics** — counts everything that matters for a migration: word count, page count, heading structure, broken links, image count and format, table complexity, readability. These are the numbers a migration specialist would manually audit before starting a project.
 
-**3. Runs AI analysis** — sends the extracted text and metrics to an LLM that evaluates content clarity, tone consistency, structural quality, and produces specific, document-aware suggestions (not generic advice). It also flags content debt: undefined acronyms, outdated references, and unresolved placeholders.
-
-The final output is a readiness grade (A/B/C/D), a score out of 100, an effort estimate in person-days, and a list of blockers that must be fixed before migration can begin.
+**3. Runs AI analysis** — sends the extracted text and metrics to an LLM that evaluates content clarity, tone consistency, structural quality, and produces specific, document-aware suggestions (not generic advice). It also flags undefined acronyms, outdated references, and unresolved placeholders.
 
 ---
 
@@ -26,10 +24,10 @@ The final output is a readiness grade (A/B/C/D), a score out of 100, an effort e
 
 ```
 backend/
-├── app.py                      # Flask entry point
+├── app.py                      # Flask entry 
 ├── config.py                   # API keys, file size limits, thresholds
 ├── requirements.txt
-├── .env                        # Your Groq API key goes here
+├── .env                        # Your Groq API and Openrouter API key goes here
 │
 ├── parsers/
 │   ├── docx_parser.py          # Extracts text, headings, tables, images from .docx
@@ -37,10 +35,10 @@ backend/
 │
 ├── metrics/
 │   └── extractor.py            # Computes all quantitative metrics
-│                               # (readability, links, duplication, tables, media, etc.)
+│                               # (readability, links, duplication, tables, media.)
 │
 ├── analysis/
-│   └── ai_analyzer.py          # Builds the prompt, calls Groq, parses the response
+│   └── ai_analyzer.py          # Builds the prompt, calls LLM, parses the response
 │
 ├── services/
 │   ├── metrics_service.py      # Service layer wrapping extractor.py
@@ -50,13 +48,13 @@ backend/
 │   ├── parse_routes.py         # POST /api/parse
 │   ├── metrics_routes.py       # POST /api/metrics
 │   ├── analysis_routes.py      # POST /api/analyze
-│   └── report_routes.py        # POST /api/report  ←  main endpoint
+│   └── report_routes.py        # POST /api/report  ←  main endpoint called from frontend
 │
 └── utils/
     └── helpers.py              # File type detection, temp file cleanup, hashing
 ```
 
-The key design decision: `parsers/` only extracts raw content. `metrics/` only computes numbers. `analysis/` only handles AI. Routes wire them together. This separation makes each piece independently testable.
+The key design decision: `parsers/` only extracts raw content. `metrics/` only computes numbers. `analysis/` only handles AI analysis. Routes wire them together. This separation makes each piece independently testable.
 
 ---
 
@@ -65,7 +63,8 @@ The key design decision: `parsers/` only extracts raw content. `metrics/` only c
 ### What you need
 
 - Python 3.9 or higher
-- A Groq API key — free at [console.groq.com](https://console.groq.com)
+- A Groq API key — free at https://console.groq.com/
+- A Openrouter API key — free at https://openrouter.ai/workspaces
 
 ### Install
 
@@ -208,7 +207,7 @@ Any `.docx` or `.pdf` file. Tested with:
 - A 32-page startup report (DOCX, 640 images, 7,967 words) → Grade A
 - A 41-page research paper (PDF, 11 images, 12,393 words) → Grade B
 
-### Output — Abridged
+### Output 
 
 ```json
 {
