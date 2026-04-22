@@ -21,6 +21,17 @@ The tool runs three things in sequence when you upload a file:
 The React frontend visualises all of this in a dashboard styled after Document360's own UI.
 
 ---
+### Design Considerations & Real-World Approach
+
+This solution is built considering real-world document migration workflows, It explicitly handles complex scenarios such as table-heavy financial reports, multi-column PDFs, embedded images and diagrams, mixed-language content, and inconsistent formatting patterns. The system adopts a hybrid approach combining deterministic metric extraction for reliability with AI-driven analysis for contextual understanding of readability, structure, and migration readiness. AI outputs are tightly controlled through prompt design to ensure document-specific insights (avoiding generic suggestions), with a fallback model strategy to maintain robustness under API limits or failures. The architecture enforces strict separation between parsing, metrics, and analysis layers, enabling modularity, testability, and scalability.
+
+Complex Document Handling — Supports tabular data, multi-column layouts, embedded media, and noisy formatting
+Hybrid Analysis Approach — Deterministic metrics + AI-driven contextual evaluation
+Controlled AI Usage — Prompts enforce section-specific, non-generic insights
+Resilient System Design — Multi-model fallback ensures reliability under failures
+Migration-Focused Metrics — Identifies real blockers like broken links, complex tables, and content debt
+Modular Architecture — Loosely coupled components for maintainability and scalability
+--- 
 
 ## Project Structure
 
@@ -159,7 +170,6 @@ curl -X POST -F "file=@your-document.pdf" http://127.0.0.1:5000/api/report
 | `POST /api/parse` | Extract raw structure — headings, paragraphs, tables, images |
 | `POST /api/metrics` | Metrics extraction only, no AI call, fast |
 | `POST /api/analyze` | AI analysis only |
-| `GET /api/report/<report_id>` | Retrieve cached report by ID |
 | `GET /api/health` | Check server and Groq API status |
 
 ---
@@ -361,43 +371,10 @@ curl -X POST http://127.0.0.1:5000/api/report \
 }
 ```
 
-**Response Headers:**
-- `X-Processing-Time`: Processing duration (e.g., 2.345)
-- `X-Readiness-Grade`: Letter grade (A, B, C, D)
-- `X-Auto-Migratable`: true/false
 
 ---
 
-### 5. Retrieve Cached Report (`GET /api/report/<report_id>`)
-
-**CURL Command:**
-```bash
-curl -X GET http://127.0.0.1:5000/api/report/a3f5b2c8d1e9
-```
-
-**Sample Output:** (Same as POST /api/report)
-```json
-{
-  "success": true,
-  "report_id": "a3f5b2c8d1e9",
-  "summary": { "..." },
-  "metrics": { "..." },
-  "analysis": { "..." }
-}
-```
-
-**Error Response (if report not found - 404):**
-```json
-{
-  "success": false,
-  "error": "report_not_found",
-  "detail": "No cached report found for ID 'a3f5b2c8d1e9'. Reports are cached temporarily (max 20)."
-}
-```
-
----
-
-### 6. Health Check (`GET /api/health`)
+### 5. Health Check (`GET /api/health`)
 
 **CURL Command:**
 ```bash
