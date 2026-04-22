@@ -21,16 +21,40 @@ The tool runs three things in sequence when you upload a file:
 The React frontend visualises all of this in a dashboard styled after Document360's own UI.
 
 ---
+
 ### Design Considerations & Real-World Approach
 
-This solution is built considering real-world document migration workflows, It explicitly handles complex scenarios such as table-heavy financial reports, multi-column PDFs, embedded images and diagrams, mixed-language content, and inconsistent formatting patterns. The system adopts a hybrid approach combining deterministic metric extraction for reliability with AI-driven analysis for contextual understanding of readability, structure, and migration readiness. AI outputs are tightly controlled through prompt design to ensure document-specific insights (avoiding generic suggestions), with a fallback model strategy to maintain robustness under API limits or failures. The architecture enforces strict separation between parsing, metrics, and analysis layers, enabling modularity, testability, and scalability.
+This solution is purpose-built for real-world document migration workflows. It handles complex scenarios that commodity tools miss:
 
-Complex Document Handling — Supports tabular data, multi-column layouts, embedded media, and noisy formatting
-Hybrid Analysis Approach — Deterministic metrics + AI-driven contextual evaluation
-Controlled AI Usage — Prompts enforce section-specific, non-generic insights
-Resilient System Design — Multi-model fallback ensures reliability under failures
-Migration-Focused Metrics — Identifies real blockers like broken links, complex tables, and content debt
-Modular Architecture — Loosely coupled components for maintainability and scalability
+**Real-World Challenges Addressed:**
+- Table-heavy financial reports with complex layouts
+- Multi-column PDFs and irregular formatting
+- Embedded images, diagrams, and mixed media
+- Mixed-language content requiring localization detection
+- Inconsistent formatting patterns and corrupted structures
+
+**Hybrid Analysis Strategy:**
+The system combines two complementary approaches:
+1. **Deterministic metric extraction** — provides reliable, reproducible quantitative measurements
+2. **AI-driven contextual evaluation** — adds qualitative understanding of readability, structure, and migration readiness
+
+**Key Design Features:**
+
+| Feature | Benefit |
+|---|---|
+| **Complex Document Handling** | Supports tabular data, multi-column layouts, embedded media, and noisy formatting |
+| **Hybrid Analysis Approach** | Deterministic metrics + AI-driven contextual evaluation for balanced insights |
+| **Controlled AI Usage** | Prompts enforce section-specific, document-cited suggestions (no generic advice) |
+| **Resilient System Design** | Multi-model fallback (Groq + OpenRouter) ensures reliability under API limits |
+| **Migration-Focused Metrics** | Identifies real blockers: broken links, complex tables, content debt, acronyms |
+| **Modular Architecture** | Strict separation of concerns (parsers, metrics, analysis) enables independent testing and scaling |
+
+**Robustness & Reliability:**
+- AI outputs tightly controlled through prompt design to avoid generic suggestions
+- Fallback model strategy (Groq → OpenRouter) maintains uptime under API failures
+- Graceful error handling for corrupted files, empty documents, and edge cases
+- In-memory caching of reports (LRU with max 20 entries) for fast retrieval
+
 --- 
 
 ## Project Structure
