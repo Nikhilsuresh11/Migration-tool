@@ -105,17 +105,15 @@ python app.py
 Backend runs at `http://127.0.0.1:5000`
 
 
-### Routes
-
-<img width="373" height="171" alt="image" src="https://github.com/user-attachments/assets/112c926e-e75c-442e-964f-1235b63195aa" />
 
 ### Testing documents used (input)
 
 https://drive.google.com/drive/folders/10WGgattvIv08c_a0UN0sojcMlZk3oe0x?usp=sharing
 
-### Output
+### Input and Output
 
-<img width="1158" height="734" alt="image" src="https://github.com/user-attachments/assets/bf883a22-a495-4b31-ae4f-6ace4d92485e" />
+curl --location 'http://127.0.0.1:5000/api/parse' \
+--form 'file=@"d:\\Start\\migrationTool\\docs\\Indus Valley Annual Report 2025.pdf"'
 
 <details>
 <summary><strong> View Full API Response</strong></summary>
