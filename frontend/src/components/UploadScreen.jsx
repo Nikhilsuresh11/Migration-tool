@@ -54,13 +54,8 @@ export default function UploadScreen({ onAnalyze, isLoading, loadingStep }) {
       <div className="w-full max-w-xl animate-fade-in">
         {/* Logo / brand - Centered styling matching the galaxy theme */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 mb-4 px-4 py-1.5 rounded-full glass-panel text-xs font-semibold text-primary-light">
-            <span className="w-2 h-2 rounded-full bg-primary-light animate-pulse"></span>
-            Switch to AI-powered migration
-          </div>
           <h1 className="text-4xl lg:text-5xl font-bold font-display text-text-primary leading-tight tracking-tight mb-4">
             Flawless Migration.<br/>
-            <span className="text-gradient">Instant Answers to Customers</span>
           </h1>
           <p className="text-text-secondary mt-1.5 text-sm">
             Analyze your documents for migration readiness
@@ -178,9 +173,6 @@ export default function UploadScreen({ onAnalyze, isLoading, loadingStep }) {
           )}
         </div>
 
-        <p className="text-center text-xs text-text-muted mt-6 tracking-wide">
-          Trusted for Document360 AI Migration Readiness
-        </p>
       </div>
     </div>
   );

@@ -112,14 +112,74 @@ https://drive.google.com/drive/folders/10WGgattvIv08c_a0UN0sojcMlZk3oe0x?usp=sha
 
 Evaluated against real-world document scenarios, including financial reports, large tabular datasets, academic research papers (with formulas), technical documentation, user manuals, enterprise process documents, multi-column layouts, documents containing embedded images and diagrams, mixed-language content ensuring robustness across complex and diverse content types.
 
-### Input and Output
-curl --location 'http://127.0.0.1:5000/api/metrics' \
---form 'file=@"d:\\Start\\git push\\docs\\Indus Valley Annual Report 2025.pdf"'
+---
 
+## API Endpoints
+
+### Main — `POST /api/report`
+
+The single endpoint the frontend calls. Runs parsing, metrics, and AI analysis in one request and returns everything merged.
+
+```bash
+curl -X POST -F "file=@your-document.pdf" http://127.0.0.1:5000/api/report
+```
+
+**Sample Output:**
+```json
 {
   "success": true,
-  "filename": "document.docx",
-  "file_type": "docx",
+  "report_id": "e2c0da7af1db",
+  "summary": {
+    "filename": "product-guide.pdf",
+    "readiness_grade": "C",
+    "readiness_score": 65,
+    "status_label": "Major rework required",
+    "auto_migratable": false,
+    "overall_effort": "High",
+    "person_days": 2.5,
+    "blocker_count": 2,
+    "top_blockers": [
+      "16 broken links detected — must be fixed before migration",
+      "2 complex tables (>6 cols or >20 rows) — need restructuring"
+    ],
+    "warning_count": 1,
+    "top_warnings": [
+      "Long paragraphs (avg 93 words) — consider splitting"
+    ]
+  },
+  "metrics": { "...full metrics dict..." },
+  "analysis": { "...full AI analysis dict..." }
+}
+```
+
+### Supporting endpoints
+
+| Endpoint | What it does |
+|---|---|
+| `POST /api/parse` | Extract raw structure — headings, paragraphs, tables, images |
+| `POST /api/metrics` | Metrics extraction only, no AI call, fast |
+| `POST /api/analyze` | AI analysis only |
+| `GET /api/report/<report_id>` | Retrieve cached report by ID |
+| `GET /api/health` | Check server and Groq API status |
+
+---
+
+## Input and Output Examples
+
+### 1. Extract Metrics (`POST /api/metrics`)
+
+**CURL Command:**
+```bash
+curl -X POST http://127.0.0.1:5000/api/metrics \
+  -F "file=@document.pdf"
+```
+
+**Sample Output:**
+```json
+{
+  "success": true,
+  "filename": "document.pdf",
+  "file_type": "pdf",
   "metrics": {
     "word_count": 2500,
     "character_count": 15000,
@@ -146,10 +206,20 @@ curl --location 'http://127.0.0.1:5000/api/metrics' \
   },
   "extraction_warnings": []
 }
+```
 
-curl --location 'http://127.0.0.1:5000/api/parse' \
---form 'file=@"d:\\Start\\git push\\docs\\Indus Valley Annual Report 2025.pdf"'
+---
 
+### 2. Parse Document (`POST /api/parse`)
+
+**CURL Command:**
+```bash
+curl -X POST http://127.0.0.1:5000/api/parse \
+  -F "file=@document.pdf"
+```
+
+**Sample Output:**
+```json
 {
   "success": true,
   "filename": "document.pdf",
@@ -185,10 +255,20 @@ curl --location 'http://127.0.0.1:5000/api/parse' \
     ]
   }
 }
+```
 
+---
 
-curl --location 'http://127.0.0.1:5000/api/analyze' \
---form 'file=@"d:\\Start\\git push\\docs\\Indus Valley Annual Report 2025.pdf"'
+### 3. AI Analysis (`POST /api/analyze`)
+
+**CURL Command:**
+```bash
+curl -X POST http://127.0.0.1:5000/api/analyze \
+  -F "file=@document.pdf"
+```
+
+**Sample Output:**
+```json
 {
   "success": true,
   "filename": "document.pdf",
@@ -221,11 +301,20 @@ curl --location 'http://127.0.0.1:5000/api/analyze' \
   },
   "extraction_warnings": []
 }
+```
 
+---
 
-curl --location 'http://127.0.0.1:5000/api/report' \
---form 'file=@"d:\\Start\\git push\\docs\\Indus Valley Annual Report 2025.pdf"'
+### 4. Full Report (`POST /api/report`)
 
+**CURL Command:**
+```bash
+curl -X POST http://127.0.0.1:5000/api/report \
+  -F "file=@document.pdf"
+```
+
+**Sample Output:**
+```json
 {
   "success": true,
   "report_id": "a3f5b2c8d1e9",
@@ -270,6 +359,58 @@ curl --location 'http://127.0.0.1:5000/api/report' \
   },
   "extraction_warnings": []
 }
+```
+
+**Response Headers:**
+- `X-Processing-Time`: Processing duration (e.g., 2.345)
+- `X-Readiness-Grade`: Letter grade (A, B, C, D)
+- `X-Auto-Migratable`: true/false
+
+---
+
+### 5. Retrieve Cached Report (`GET /api/report/<report_id>`)
+
+**CURL Command:**
+```bash
+curl -X GET http://127.0.0.1:5000/api/report/a3f5b2c8d1e9
+```
+
+**Sample Output:** (Same as POST /api/report)
+```json
+{
+  "success": true,
+  "report_id": "a3f5b2c8d1e9",
+  "summary": { "..." },
+  "metrics": { "..." },
+  "analysis": { "..." }
+}
+```
+
+**Error Response (if report not found - 404):**
+```json
+{
+  "success": false,
+  "error": "report_not_found",
+  "detail": "No cached report found for ID 'a3f5b2c8d1e9'. Reports are cached temporarily (max 20)."
+}
+```
+
+---
+
+### 6. Health Check (`GET /api/health`)
+
+**CURL Command:**
+```bash
+curl -X GET http://127.0.0.1:5000/api/health
+```
+
+**Sample Output:**
+```json
+{
+  "status": "healthy",
+  "message": "Welcome to migration stats"
+}
+```
 
 ---
 
@@ -324,59 +465,6 @@ The dashboard has three tabs:
 <img width="1575" height="671" alt="image" src="https://github.com/user-attachments/assets/555fc980-835f-4988-9004-9ef19dba8b0f" />
 
 The action bar at the bottom lets you export the complete report as a JSON file or start a new analysis.
-
----
-
-## API Endpoints
-
-### Main — `POST /api/report`
-
-The single endpoint the frontend calls. Runs parsing, metrics, and AI analysis in one request and returns everything merged.
-
-```bash
-curl -X POST -F "file=@your-document.pdf" http://127.0.0.1:5000/api/report
-```
-
-```json
-{
-  "success": true,
-  "report_id": "e2c0da7af1db",
-  "summary": {
-    "filename": "product-guide.pdf",
-    "readiness_grade": "C",
-    "readiness_score": 65,
-    "status_label": "Major rework required",
-    "auto_migratable": false,
-    "overall_effort": "High",
-    "person_days": 2.5,
-    "blocker_count": 2,
-    "top_blockers": [
-      "16 broken links detected — must be fixed before migration",
-      "2 complex tables (>6 cols or >20 rows) — need restructuring"
-    ],
-    "warning_count": 1,
-    "top_warnings": [
-      "Long paragraphs (avg 93 words) — consider splitting"
-    ]
-  },
-  "metrics": { "...full metrics dict..." },
-  "analysis": { "...full AI analysis dict..." }
-}
-```
-
-
-
----
-
-### Supporting endpoints
-
-| Endpoint | What it does |
-|---|---|
-| `POST /api/parse` | Extract raw structure — headings, paragraphs, tables, images |
-| `POST /api/metrics` | Metrics extraction only, no AI call, fast |
-| `POST /api/analyze` | AI analysis only |
-| `GET /api/report` | Feeds UI with all other three routes |
-| `GET /api/health` | Check server and Groq API status |
 
 ---
 
