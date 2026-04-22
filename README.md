@@ -110,6 +110,8 @@ Backend runs at `http://127.0.0.1:5000`
 
 https://drive.google.com/drive/folders/10WGgattvIv08c_a0UN0sojcMlZk3oe0x?usp=sharing
 
+Evaluated against real-world document scenarios, including financial reports, large tabular datasets, academic research papers (with formulas), technical documentation, user manuals, enterprise process documents, multi-column layouts, documents containing embedded images and diagrams, mixed-language content ensuring robustness across complex and diverse content types.
+
 ### Input and Output
 curl --location 'http://127.0.0.1:5000/api/metrics' \
 --form 'file=@"d:\\Start\\git push\\docs\\Indus Valley Annual Report 2025.pdf"'
