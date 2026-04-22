@@ -1,60 +1,71 @@
 # Document Analysis & Migration Readiness Tool
 
-A Flask-based automation tool that answers one question for every document you upload:
+A full-stack tool that answers one question for every document you upload:
 
 > **"Is this document ready to migrate to Document360? If not, what needs to change?"**
 
-It parses `.docx` and `.pdf` files, extracts structural metrics, and uses AI (LLaMA 3.3 70B via Groq and Google Gemma via Openrouter) to produce a readiness grade, effort estimate, and specific improvement suggestions — all in a single API call.
+Upload a `.docx` or `.pdf` file. Get back a readiness grade, a score out of 100, an effort estimate in person-days, a list of blockers that must be fixed, and AI-generated suggestions that reference your actual document — not generic advice.
 
 ---
 
-## What This Tool Does
+## How It Works
 
-When you upload a document, the tool runs three things in sequence:
+The tool runs three things in sequence when you upload a file:
 
-**1. Parses the document** — extracts every heading, paragraph, table, image, and link from Word and PDF files.
+**1. Parses the document** — extracts every heading, paragraph, table, image, and link from Word and PDF files. 
 
-**2. Extracts metrics** — counts everything that matters for a migration: word count, page count, heading structure, broken links, image count and format, table complexity, readability. These are the numbers a migration specialist would manually audit before starting a project.
+**2. Extracts metrics** — computes everything a migration specialist would manually audit: word count, page count, heading structure, broken links, image formats and size, table complexity, readability score, duplicate sections.
 
-**3. Runs AI analysis** — sends the extracted text and metrics to an LLM that evaluates content clarity, tone consistency, structural quality, and produces specific, document-aware suggestions (not generic advice). It also flags undefined acronyms, outdated references, and unresolved placeholders.
+**3. Runs AI analysis** — sends the extracted text and metrics to LLaMA 3.3 70B (via Groq) which evaluates content clarity, tone consistency, structural quality, and produces document-specific suggestions. The prompt explicitly instructs the model to cite actual section titles and acronyms — not generic advice. Also fallback as google/gemma-4-26b-a4b (via openrouter)
+
+The React frontend visualises all of this in a dashboard styled after Document360's own UI.
 
 ---
 
 ## Project Structure
 
 ```
-backend/
-├── app.py                      # Flask entry 
-├── config.py                   # API keys, file size limits, thresholds
-├── requirements.txt
-├── .env                        # Your Groq API and Openrouter API key goes here
+Migration-tool/
+├── backend/
+│   ├── app.py                      # Flask entry point
+│   ├── config.py                   # API keys, thresholds, limits
+│   ├── requirements.txt
+│   ├── .env                        # Your Groq API key, Openrouter API key goes here
+│   ├── parsers/
+│   │   ├── docx_parser.py          # Extracts text, headings, tables, images from .docx
+│   │   └── pdf_parser.py           # Same for .pdf
+│   ├── metrics/
+│   │   └── extractor.py            # Computes all quantitative metrics
+│   ├── analysis/
+│   │   └── ai_analyzer.py          # Builds the prompt, calls Groq, parses response
+│   ├── services/
+│   │   ├── metrics_service.py      # Service layer wrapping extractor.py
+│   │   └── analysis_service.py     # Service layer wrapping ai_analyzer.py
+│   ├── routes/
+│   │   ├── parse_routes.py         # POST /api/parse
+│   │   ├── metrics_routes.py       # POST /api/metrics
+│   │   ├── analysis_routes.py      # POST /api/analyze
+│   │   └── report_routes.py        # POST /api/report  ← cummulative endpoint used for UI with skimmed output from all other three routes
+│   └── utils/
+│       └── helpers.py              # File type detection
 │
-├── parsers/
-│   ├── docx_parser.py          # Extracts text, headings, tables, images from .docx
-│   └── pdf_parser.py           # Extracts same from .pdf using PyMuPDF
-│
-├── metrics/
-│   └── extractor.py            # Computes all quantitative metrics
-│                               # (readability, links, duplication, tables, media.)
-│
-├── analysis/
-│   └── ai_analyzer.py          # Builds the prompt, calls LLM, parses the response
-│
-├── services/
-│   ├── metrics_service.py      # Service layer wrapping extractor.py
-│   └── analysis_service.py     # Service layer wrapping ai_analyzer.py
-│
-├── routes/
-│   ├── parse_routes.py         # POST /api/parse
-│   ├── metrics_routes.py       # POST /api/metrics
-│   ├── analysis_routes.py      # POST /api/analyze
-│   └── report_routes.py        # POST /api/report  ←  main endpoint called from frontend
-│
-└── utils/
-    └── helpers.py              # File type detection, temp file cleanup, hashing
+└── frontend/
+    ├── src/
+    │   ├── App.jsx                 # Root — manages upload/results state
+    │   ├── components/
+    │   │   ├── UploadScreen.jsx    # Drag-and-drop zone with loading steps
+    │   │   ├── Dashboard.jsx       # Results layout — banner, metrics, tabs
+    │   │   ├── tabs/
+    │   │   │   ├── Overview.jsx    # Score ring, effort bars, blockers, AI analysis
+    │   │   │   ├── ContentDebt.jsx # Acronyms, outdated refs, placeholders
+    │   │   │   └── RawJSON.jsx     # Syntax-highlighted full API response
+    │   │   └── ActionBar.jsx       # Export JSON button
+    │   └── main.jsx
+    ├── package.json
+    └── vite.config.js              # Proxies /api/* to Flask on port 5000
 ```
 
-The key design decision: `parsers/` only extracts raw content. `metrics/` only computes numbers. `analysis/` only handles AI analysis. Routes wire them together. This separation makes each piece independently testable.
+The key design decision: `parsers/` only extracts raw content. `metrics/` only computes numbers. `analysis/` only handles AI. Routes wire them together. This makes each piece independently testable.
 
 ---
 
@@ -62,55 +73,92 @@ The key design decision: `parsers/` only extracts raw content. `metrics/` only c
 
 ### What you need
 
-- Python 3.9 or higher
-- A Groq API key — free at https://console.groq.com/
-- A Openrouter API key — free at https://openrouter.ai/workspaces
+- Python 3.9+ (backend)
+- Node.js 18+ (frontend)
+- A Groq API key - https://console.groq.com
+- A Openrouter API key - https://openrouter.ai/workspace (fallback)
+---
 
-### Install
+### Backend
 
 ```bash
-# Clone and enter the backend folder
+# 1. Enter the backend folder
 cd backend
 
-# Create a virtual environment
+# 2. Create and activate a virtual environment
 python -m venv venv
 venv\Scripts\activate        # Windows
 source venv/bin/activate     # macOS / Linux
 
-# Install dependencies
+# 3. Install dependencies
 pip install -r requirements.txt
 
-# Add your Groq API key
-# Open .env and replace the placeholder:
-# GROQ_API_KEY=your_groq_api_key_here
-```
+# 4. Add your Groq API key
+#    Open .env and set:
+#    GROQ_API_KEY=your_groq_api_key_here
+#    OPENROUTER_API_KEY=your_open_router_key_here
 
-### Run
-
-```bash
+# 5. Start the Flask server
 python app.py
 ```
 
-API is now running at `http://127.0.0.1:5000`
+Backend runs at `http://127.0.0.1:5000`
+
+---
+
+### Frontend
+
+```bash
+# In a separate terminal, enter the frontend folder
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start the dev server
+npm run dev
+```
+
+Frontend runs at `http://localhost:3001`
+
+The Vite dev server proxies all `/api/*` requests to `http://127.0.0.1:5000`, so no CORS issues during development. Both servers must be running at the same time.
+
+---
+
+## Using the Tool
+
+**Upload screen** — drag and drop a `.pdf` or `.docx` file, or click to browse. Once a file is selected, click "Analyze document". The UI shows live step progress:
+
+```
+Parsing document...  →  Extracting metrics...  →  Running AI analysis...
+```
+
+**Results dashboard** — the readiness banner at the top answers the core question immediately. The colour tells you the verdict at a glance: green for ready, amber for minor fixes needed, red for major rework. Everything below provides the supporting detail.
+
+The dashboard has three tabs:
+
+- **Overview** — readiness score (ring chart), migration effort by content type (bar chart), blockers and warnings, AI content analysis key-values, and visual content assessment
+- **Content Debt** — table of undefined acronyms with suggested actions, outdated references, unresolved placeholders
+- **Raw JSON** — the full API response with syntax highlighting and a one-click copy button
+
+The action bar at the bottom lets you export the complete report as a JSON file or start a new analysis.
 
 ---
 
 ## API Endpoints
 
-### Main endpoint — `POST /api/report`
+### Main — `POST /api/report`
 
-This is the one endpoint that does everything. Upload a file, get back a complete migration readiness report.
+The single endpoint the frontend calls. Runs parsing, metrics, and AI analysis in one request and returns everything merged.
 
 ```bash
 curl -X POST -F "file=@your-document.pdf" http://127.0.0.1:5000/api/report
 ```
 
-Returns a `summary` block (the headline verdict), a full `metrics` block (all computed numbers), and a full `analysis` block (AI-generated insights).
-
-The summary block answers the migration question directly:
-
 ```json
 {
+  "success": true,
+  "report_id": "e2c0da7af1db",
   "summary": {
     "filename": "product-guide.pdf",
     "readiness_grade": "C",
@@ -128,17 +176,13 @@ The summary block answers the migration question directly:
     "top_warnings": [
       "Long paragraphs (avg 93 words) — consider splitting"
     ]
-  }
+  },
+  "metrics": { "...full metrics dict..." },
+  "analysis": { "...full AI analysis dict..." }
 }
 ```
 
-Response headers also carry key values for programmatic use:
 
-```
-X-Processing-Time: 4.23
-X-Readiness-Grade: C
-X-Auto-Migratable: false
-```
 
 ---
 
@@ -146,148 +190,65 @@ X-Auto-Migratable: false
 
 | Endpoint | What it does |
 |---|---|
-| `POST /api/parse` | Extract raw structure (headings, paragraphs, tables) from a document |
-| `POST /api/metrics` | Run metrics extraction only — no AI call |
-| `POST /api/analyze` | Run AI analysis only — pass in a document |
-| `GET /api/report/<id>` | Retrieve a cached report by its ID |
-| `GET /api/health` | Check if the server and Groq API are configured |
-
-Reports are cached by file hash (SHA-256). The last 20 reports are kept in memory. The `report_id` returned by `/api/report` can be used with `GET /api/report/<id>` to retrieve the same result without re-processing.
+| `POST /api/parse` | Extract raw structure — headings, paragraphs, tables, images |
+| `POST /api/metrics` | Metrics extraction only, no AI call, fast |
+| `POST /api/analyze` | AI analysis only |
+| `GET /api/report` | Feeds UI with all other three routes |
+| `GET /api/health` | Check server and Groq API status |
 
 ---
 
 ## Metrics Extracted
 
-These map directly to what a migration specialist checks before starting a project:
+The five metrics the task requires, plus bonus fields relevant to Document360 migration:
 
-| Metric | Why it matters for migration |
-|---|---|
-| Word count + reading time | Scoping — larger docs need more effort |
-| Page count | Direct input to effort estimation |
-| Heading distribution (H1–H6) | Reveals whether the doc can be split into D360 articles |
-| Average words per paragraph | High values (>80) mean content needs splitting before import |
-| Flesch readability score | Flags content that needs rewriting for a general audience |
-| Broken link count | Broken links must be fixed before migration — they become 404s |
-| Image count + formats + size | Images need CDN hosting; large counts drive up effort |
-| Table count + complexity | Complex tables (merged cells, >6 cols) don't render in D360's editor |
-| Duplicate sections | Duplicated content fragments the knowledge base |
-| Undefined acronyms | Readers in the new platform won't have original context |
-| Content age / staleness | Stale docs should be archived, not migrated |
-| Language detection | Flags multilingual docs that need localization handling |
-
-Beyond the required metrics (pages, words, paragraphs, headings, avg words/para), all additional fields above are bonus insights relevant to real migration work.
+| Metric | Required / Bonus | Why it matters for migration |
+|---|---|---|
+| Word count | ✅ Required | Scoping — larger docs need more effort |
+| Total pages | ✅ Required | Direct input to effort estimation |
+| Paragraph count | ✅ Required | High counts with low word counts = fragmented content |
+| Heading count + distribution | ✅ Required | Reveals how the doc maps to D360 articles |
+| Average words per paragraph | ✅ Required | Values >80 mean content needs splitting before import |
+| Broken link count | ⭐ Bonus | Broken links become 404s in D360 — must fix before migration |
+| Image count + format + size | ⭐ Bonus | Images need CDN hosting; large counts drive up effort |
+| Table count + complexity | ⭐ Bonus | Complex tables (merged cells, >6 cols) don't render in D360's editor |
+| Duplicate sections | ⭐ Bonus | Duplicated content fragments the knowledge base |
+| Undefined acronyms | ⭐ Bonus | Readers in the new platform won't have the original context |
+| Content age / staleness | ⭐ Bonus | Stale docs should be archived, not migrated |
+| Language detection | ⭐ Bonus | Flags multilingual docs needing localisation handling |
 
 ---
 
-## AI Analysis
+## AI Analysis Output
 
-The AI analysis uses LLaMA 3.3 70B (via Groq) with a system prompt that establishes a migration specialist persona. The model receives the document text and the extracted metrics as context, and returns structured JSON covering:
+The model receives the document text and extracted metrics as context, and returns:
 
 - **Readability level** — Easy / Medium / Complex with explanation
-- **Content clarity** — Score out of 10 with assessment
-- **Structural quality** — Score out of 10, well-organized vs. fragmented
-- **Tone analysis** — Formal/conversational, consistency, passive voice ratio
-- **Content classification** — Document type, domain, audience, whether it's evergreen
-- **Content debt** — Undefined acronyms, outdated references, unresolved placeholders, broken cross-references
-- **Migration readiness** — Status label, specific details
-- **Migration effort breakdown** — Per content type (text, images, tables, links, structure) with reasoning
-- **IA mapping suggestion** — Suggested Document360 category, slug, and article breakdown
-- **Visual content assessment** — Image-to-text ratio, accessibility risk, alt text status
-- **Suggestions** — Document-specific, referencing actual section titles and acronyms found
-
-The prompt explicitly instructs the model to never give generic advice — every suggestion must reference something found in the actual document.
+- **Content clarity** — score out of 10 with assessment
+- **Structural quality** — score out of 10, well-organized vs. fragmented
+- **Tone analysis** — formal/conversational, consistency
+- **Content classification** — document type, domain, audience
+- **Content debt** — undefined acronyms, outdated references, unresolved placeholders
+- **Migration readiness** — status label with specific details
+- **Effort breakdown** — per content type with one-line reasoning per category
+- **Suggestions** — each one cites a specific section title or acronym from the document
 
 ---
 
-## Sample Input & Output
 
-### Input
-Any `.docx` or `.pdf` file. Tested with:
-- A 132-page annual report (PDF, 639 images, 12,338 words) → Grade C
-- A 32-page startup report (DOCX, 640 images, 7,967 words) → Grade A
-- A 41-page research paper (PDF, 11 images, 12,393 words) → Grade B
-
-### Output 
-
-```json
-{
-  "success": true,
-  "report_id": "e2c0da7af1db",
-  "summary": {
-    "filename": "Indus valley annual report 2024.pdf",
-    "file_type": "pdf",
-    "readiness_grade": "C",
-    "readiness_score": 65,
-    "status_label": "Major rework required",
-    "auto_migratable": false,
-    "overall_effort": "Medium",
-    "person_days": 2.5,
-    "blocker_count": 2,
-    "top_blockers": [
-      "16 broken links detected — must be fixed before migration",
-      "2 complex tables (>6 cols or >20 rows) — may need restructuring"
-    ],
-    "warning_count": 1,
-    "top_warnings": [
-      "Long paragraphs (avg 93.47 words) — consider breaking into smaller sections"
-    ]
-  },
-  "metrics": {
-    "word_count": 12338,
-    "total_pages": 132,
-    "paragraph_count": 132,
-    "heading_count": 51,
-    "avg_words_per_paragraph": 93.47,
-    "flesch_reading_ease": 39.75,
-    "readability_level": "Complex",
-    "links": {
-      "broken_links": 16,
-      "external_links": 34
-    },
-    "tables": {
-      "table_count": 112,
-      "complex_tables": 2,
-      "tables_with_headers": 107
-    },
-    "media": {
-      "images_count": 639,
-      "total_media_size_mb": 19.3,
-      "image_formats": { "jpeg": 493 }
-    },
-    "document360_readiness": {
-      "grade": "C",
-      "score": 65,
-      "auto_migratable": false,
-      "manual_effort_hours_estimated": 11.0
-    }
-  },
-  "analysis": {
-    "readability_level": "Complex",
-    "content_clarity": { "score": 6, "assessment": "..." },
-    "structural_quality": { "score": 8, "assessment": "well-organized" },
-    "migration_readiness": { "status": "Major rework required" },
-    "content_debt": {
-      "abbreviations_without_definition": ["GFCF", "SIPs"],
-      "outdated_references_detected": ["last year", "next quarter"],
-      "content_debt_score": 4
-    },
-    "suggestions": [
-      "Section 'How to read this report' averages 156 words per paragraph — split into sub-sections with sub-headings.",
-      "The acronym 'GFCF' is used without prior definition — expand on first use.",
-      "Section 'India's Discretionaries spend' contains a complex chart — add a brief text summary below it."
-    ]
-  }
-}
-```
 
 ---
+
+
 
 ## Tools & Libraries
+
+### Backend
 
 | Library | Purpose |
 |---|---|
 | Flask | REST API framework |
-| Flask-CORS | Allows the frontend to call the API |
+| Flask-CORS | Allows the frontend to call the API from a different port |
 | python-docx | Parses `.docx` files |
 | PyMuPDF (fitz) | Parses `.pdf` files — text, images, tables, metadata |
 | Groq SDK | LLaMA 3.3 70B for AI analysis |
@@ -296,18 +257,14 @@ Any `.docx` or `.pdf` file. Tested with:
 | Pygments | Detects programming languages in code blocks |
 | Werkzeug | Secure file upload handling |
 
----
+### Frontend
 
-## Error Handling
-
-The tool handles real-world document problems without crashing:
-
-- **Empty documents** — returns metrics with zero counts, skips AI call
-- **Corrupted files** — returns HTTP 422 with a readable error message
-- **Wrong file type** — returns HTTP 400, only `.pdf` and `.docx` accepted
-- **AI call failure** — returns HTTP 200 with `analysis: null` and a warning; metrics still returned
-- **Large documents** — text is truncated to fit the model's context window; a warning is added to `extraction_warnings`
-- **Missing metadata** — all metadata fields default to `null`, never crash the response
+| Library | Purpose |
+|---|---|
+| React 18 | UI framework |
+| Vite | Dev server with `/api` proxy to Flask on port 5000 |
+| Tailwind CSS | Styling — Document360-inspired design system |
+| Fetch API | HTTP calls to the backend (no extra dependencies) |
 
 ---
 
@@ -315,9 +272,9 @@ The tool handles real-world document problems without crashing:
 
 | Criterion | How this submission addresses it |
 |---|---|
-| Accuracy of document parsing | Separate parsers for DOCX and PDF; headings extracted by style (DOCX) and font size heuristics (PDF); tables detected via PyMuPDF's `find_tables()` |
-| Relevance of metrics for migration | All 5 required metrics present + 10 bonus metrics directly relevant to Document360 migration (broken links, table complexity, image formats, content age, duplication) |
-| Quality of AI-driven insights | Prompt instructs model to cite specific section titles and acronyms; generic advice is explicitly prohibited in the system prompt |
-| Practical usefulness | Single `/api/report` endpoint returns a grade, score, effort estimate, and prioritised blocker list — the exact output a migration lead needs to scope a project |
-| Code quality | Parsers, metrics, analysis, and routes are fully separated; each module is independently importable and testable |
-| Real-world scenario handling | Tested on a 132-page PDF with 639 images and 16 broken links; empty doc and corrupted file edge cases handled |
+| Accuracy of document parsing | Separate parsers for DOCX and PDF; headings extracted by paragraph style (DOCX) and font-size heuristics (PDF); tables detected via PyMuPDF's `find_tables()` |
+| Relevance of metrics for migration | All 5 required metrics present + 8 bonus metrics directly relevant to Document360 migration (broken links, table complexity, image formats, content age, duplication) |
+| Quality of AI-driven insights | Prompt instructs the model to cite specific section titles and acronyms found in the document; generic advice is explicitly prohibited in the system prompt |
+| Practical usefulness | Single `/api/report` endpoint returns a grade, score, effort estimate, and prioritised blocker list — the exact output a migration lead needs to scope a project; React dashboard surfaces this without requiring the user to read raw JSON |
+| Code quality | Parsers, metrics, analysis, services, and routes are fully separated; each module is independently importable and testable |
+| Real-world scenario handling | Tested on a 132-page PDF with 639 images and 16 broken links; empty documents and corrupted files handled with graceful fallbacks throughout |
