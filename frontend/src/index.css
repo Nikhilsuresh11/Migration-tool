@@ -1,0 +1,145 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #9F32FF;
+  --color-primary-light: #CD8BF8;
+  --color-primary-dark: #7412DD;
+  --color-success: #10B981;
+  --color-success-light: #064E3B; /* Darker background for success in dark mode */
+  --color-warning: #F59E0B;
+  --color-warning-light: #78350F;
+  --color-danger: #EF4444;
+  --color-danger-light: #7F1D1D;
+  --color-surface: rgba(255, 255, 255, 0.03);
+  --color-surface-secondary: #0A0118;
+  --color-surface-tertiary: rgba(255, 255, 255, 0.08);
+  --color-border: rgba(255, 255, 255, 0.15);
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #CBD5E1;
+  --color-text-muted: #94A3B8;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Georgia', 'Playfair Display', serif; /* Or similar aesthetic serif */
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-surface-secondary);
+    color: var(--color-text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+  }
+}
+
+/* Galaxy Background Utilities */
+.space-bg {
+  background: radial-gradient(circle at center, #2e0854 0%, #0A0118 70%);
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+}
+
+.stars {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, white, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 40px 70px, rgba(255,255,255,0.7), rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 90px 40px, white, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 160px 120px, rgba(255,255,255,0.8), rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 200px 30px, white, rgba(0,0,0,0)),
+    radial-gradient(2.5px 2.5px at 260px 140px, rgba(255,255,255,0.9), rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 320px 190px, white, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 400px 50px, rgba(255,255,255,0.6), rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 150px 250px, white, rgba(0,0,0,0));
+  background-size: 500px 500px;
+  animation: stars-drift 120s linear infinite;
+  opacity: 0.6;
+}
+
+@keyframes stars-drift {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-500px); }
+}
+
+/* Gradient text */
+.text-gradient {
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-image: linear-gradient(to right, #FFFFFF, #B485FF);
+}
+
+
+/* Score ring animation */
+@keyframes score-fill {
+  from { stroke-dashoffset: 283; }
+}
+
+/* Fade-in animation */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out forwards;
+}
+
+/* Staggered children animation */
+.animate-stagger > * {
+  opacity: 0;
+  animation: fade-in 0.4s ease-out forwards;
+}
+.animate-stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.animate-stagger > *:nth-child(2) { animation-delay: 0.1s; }
+.animate-stagger > *:nth-child(3) { animation-delay: 0.15s; }
+.animate-stagger > *:nth-child(4) { animation-delay: 0.2s; }
+.animate-stagger > *:nth-child(5) { animation-delay: 0.25s; }
+.animate-stagger > *:nth-child(6) { animation-delay: 0.3s; }
+
+/* Pulse animation for loading dots */
+@keyframes pulse-dot {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1); }
+}
+.loading-dot { animation: pulse-dot 1.4s ease-in-out infinite; }
+.loading-dot:nth-child(2) { animation-delay: 0.2s; }
+.loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* Drag over state */
+.drop-zone-active {
+  border-color: var(--color-primary) !important;
+  background-color: #EEF2FF !important;
+}
+
+/* Tab active state underline */
+.tab-active {
+  color: var(--color-primary);
+  border-bottom: 2px solid var(--color-primary);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
+
+/* Glassmorphic Utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.glow-button {
+  background: linear-gradient(135deg, #A855F7, #7412DD);
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+}
+.glow-button:hover {
+  box-shadow: 0 0 25px rgba(168, 85, 247, 0.7);
+}
