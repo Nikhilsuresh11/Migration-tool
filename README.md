@@ -27,16 +27,11 @@ The React frontend visualises all of this in a dashboard styled after Document36
 This solution is purpose-built for real-world document migration workflows. It handles complex scenarios that commodity tools miss:
 
 **Real-World Challenges Addressed:**
-- Table-heavy financial reports with complex layouts
-- Multi-column PDFs and irregular formatting
+- Multi-column PDFs , tabular and irregular formatting
 - Embedded images, diagrams, and mixed media
 - Mixed-language content requiring localization detection
 - Inconsistent formatting patterns and corrupted structures
 
-**Hybrid Analysis Strategy:**
-The system combines two complementary approaches:
-1. **Deterministic metric extraction** — provides reliable, reproducible quantitative measurements
-2. **AI-driven contextual evaluation** — adds qualitative understanding of readability, structure, and migration readiness
 
 **Key Design Features:**
 
@@ -53,7 +48,6 @@ The system combines two complementary approaches:
 - AI outputs tightly controlled through prompt design to avoid generic suggestions
 - Fallback model strategy (Groq → OpenRouter) maintains uptime under API failures
 - Graceful error handling for corrupted files, empty documents, and edge cases
-- In-memory caching of reports (LRU with max 20 entries) for fast retrieval
 
 --- 
 
