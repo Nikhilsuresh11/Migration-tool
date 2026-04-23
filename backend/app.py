@@ -14,7 +14,18 @@ def create_app() -> Flask:
 
     app = Flask(__name__)
     app.config.from_object(Config)
-    CORS(app)
+    
+    # Configure CORS with dynamic origin validation
+    CORS(app, resources={
+        r"/api/*": {
+            "origins": Config.is_origin_allowed,
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": True,
+            "max_age": 3600,
+        }
+    })
+    
     Config.init_upload_folder()
 
     app.register_blueprint(parse_bp)
