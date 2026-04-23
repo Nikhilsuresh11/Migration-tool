@@ -35,6 +35,7 @@ class Config:
             "http://localhost:5173",
             "http://127.0.0.1:3000",
             "http://127.0.0.1:5173",
+            "https://migration-tool-mu.vercel.app",  # Explicitly add your Vercel app
             "https://*.vercel.app",  # Flask-CORS will match this pattern
         ]
         
