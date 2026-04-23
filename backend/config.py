@@ -1,5 +1,4 @@
 import os
-import re
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -22,31 +21,29 @@ class Config:
     OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
     OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "google/gemma-4-26b-a4b-it:free")
 
-    CORS_LOCAL_ORIGINS = [
-        "http://localhost:3000",       
-        "http://localhost:5173", 
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:5173",
-    ]
-    
-    CORS_CUSTOM_DOMAIN = os.getenv("FRONTEND_URL", "")
-
     @staticmethod
-    def is_origin_allowed(origin: str) -> bool:
-        """Check if origin is allowed for CORS."""
-        if not origin:
-            return False
+    def get_cors_origins_regex() -> str:
+        """
+        Build regex pattern for allowed CORS origins.
+        Allows:
+        - Local development (localhost, 127.0.0.1)
+        - Any Vercel deployment (*.vercel.app)
+        - Custom domain from FRONTEND_URL env variable (if set)
+        """
+        patterns = [
+            r"http://localhost(:\d+)?",
+            r"http://127\.0\.0\.1(:\d+)?",
+            r"https://.*\.vercel\.app",
+        ]
         
-        if origin in Config.CORS_LOCAL_ORIGINS:
-            return True
+        custom_domain = os.getenv("FRONTEND_URL", "")
+        if custom_domain:
+            # Escape dots in custom domain for regex
+            escaped_domain = custom_domain.replace(".", r"\.")
+            patterns.append(f"https://{escaped_domain}")
         
-        if re.match(r'https?://.+\.vercel\.app$', origin):
-            return True
-        
-        if Config.CORS_CUSTOM_DOMAIN and origin == Config.CORS_CUSTOM_DOMAIN:
-            return True
-        
-        return False
+        # Combine patterns with OR
+        return "(" + "|".join(patterns) + ")"
 
     @staticmethod
     def init_upload_folder():

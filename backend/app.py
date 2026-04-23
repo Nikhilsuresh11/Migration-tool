@@ -15,10 +15,11 @@ def create_app() -> Flask:
     app = Flask(__name__)
     app.config.from_object(Config)
     
-    # Configure CORS with dynamic origin validation
+    # Configure CORS with regex pattern for allowed origins
+    cors_regex = Config.get_cors_origins_regex()
     CORS(app, resources={
         r"/api/*": {
-            "origins": Config.is_origin_allowed,
+            "origins_regex": cors_regex,
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"],
             "supports_credentials": True,
