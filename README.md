@@ -1,13 +1,12 @@
 # Document Migration Readiness Tool
 
-A full-stack tool that answers one question for every document you upload:
+A tool that answers one question for every document you upload:
 
 > **"Is this document ready to migrate to Document360? If not, what needs to change?"**
 
 Upload a `.docx` or `.pdf` file. Get back a readiness grade, a score out of 100, an effort estimate in person-days, a list of blockers that must be fixed, and AI-generated suggestions that reference your actual document - not generic advice.
 
 ---
-
 ## How It Works
 
 The tool runs three things in sequence when you upload a file:
@@ -18,7 +17,10 @@ The tool runs three things in sequence when you upload a file:
 
 **3. Runs AI analysis** — sends the extracted text to LLaMA 3.3 70B (via Groq) which evaluates content clarity, tone consistency, structural quality, and produces document-specific suggestions. The prompt explicitly instructs the model to cite actual section titles and acronyms — not generic advice. Also fallback as google/gemma-4-26b (via openrouter)
 
-The React frontend visualises all of this in a dashboard styled after Document360's own UI.
+🔗 https://migration-tool-mu.vercel.app/
+The React frontend provides a dashboard experience inspired by Document360’s UI, making it easy to visualize and track the migration rediness in a clean, structured way.
+
+**Note:** The application may experience a cold start delay, so the initial request might take a few seconds to respond.
 
 ---
 
