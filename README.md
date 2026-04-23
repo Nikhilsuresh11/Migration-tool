@@ -4,7 +4,7 @@ A full-stack tool that answers one question for every document you upload:
 
 > **"Is this document ready to migrate to Document360? If not, what needs to change?"**
 
-Upload a `.docx` or `.pdf` file. Get back a readiness grade, a score out of 100, an effort estimate in person-days, a list of blockers that must be fixed, and AI-generated suggestions that reference your actual document — not generic advice.
+Upload a `.docx` or `.pdf` file. Get back a readiness grade, a score out of 100, an effort estimate in person-days, a list of blockers that must be fixed, and AI-generated suggestions that reference your actual document - not generic advice.
 
 ---
 
@@ -16,7 +16,7 @@ The tool runs three things in sequence when you upload a file:
 
 **2. Extracts metrics** — computes everything a migration specialist would manually audit: word count, page count, heading structure, broken links, image formats and size, table complexity, readability score, duplicate sections.
 
-**3. Runs AI analysis** — sends the extracted text and metrics to LLaMA 3.3 70B (via Groq) which evaluates content clarity, tone consistency, structural quality, and produces document-specific suggestions. The prompt explicitly instructs the model to cite actual section titles and acronyms — not generic advice. Also fallback as google/gemma-4-26b-a4b (via openrouter)
+**3. Runs AI analysis** — sends the extracted text to LLaMA 3.3 70B (via Groq) which evaluates content clarity, tone consistency, structural quality, and produces document-specific suggestions. The prompt explicitly instructs the model to cite actual section titles and acronyms — not generic advice. Also fallback as google/gemma-4-26b (via openrouter)
 
 The React frontend visualises all of this in a dashboard styled after Document360's own UI.
 
@@ -165,7 +165,6 @@ curl -X POST -F "file=@your-document.pdf" http://127.0.0.1:5000/api/report
     "status_label": "Major rework required",
     "auto_migratable": false,
     "overall_effort": "High",
-    "person_days": 2.5,
     "blocker_count": 2,
     "top_blockers": [
       "16 broken links detected — must be fixed before migration",
@@ -176,8 +175,8 @@ curl -X POST -F "file=@your-document.pdf" http://127.0.0.1:5000/api/report
       "Long paragraphs (avg 93 words) — consider splitting"
     ]
   },
-  "metrics": { "...full metrics dict..." },
-  "analysis": { "...full AI analysis dict..." }
+  "metrics": { "" },
+  "analysis": { "" }
 }
 ```
 
@@ -474,12 +473,11 @@ The five metrics the task requires, plus bonus fields relevant to Document360 mi
 | Paragraph count | ✅ Required | High counts with low word counts = fragmented content |
 | Heading count + distribution | ✅ Required | Reveals how the doc maps to D360 articles |
 | Average words per paragraph | ✅ Required | Values >80 mean content needs splitting before import |
-| Broken link count | ⭐ Bonus | Broken links become 404s in D360 — must fix before migration |
-| Image count + format + size | ⭐ Bonus | Images need CDN hosting; large counts drive up effort |
-| Table count + complexity | ⭐ Bonus | Complex tables (merged cells, >6 cols) don't render in D360's editor |
+| Broken link count | ✅ Required | Broken links become 404s in D360 — must fix before migration |
+| Image count + format + size | ✅ Required | Images need CDN hosting; large counts drive up effort |
+| Table count + complexity | ✅ Required| Complex tables (merged cells, >6 cols) don't render in D360's editor |
 | Duplicate sections | ⭐ Bonus | Duplicated content fragments the knowledge base |
 | Undefined acronyms | ⭐ Bonus | Readers in the new platform won't have the original context |
-| Content age / staleness | ⭐ Bonus | Stale docs should be archived, not migrated |
 | Language detection | ⭐ Bonus | Flags multilingual docs needing localisation handling |
 
 ---
