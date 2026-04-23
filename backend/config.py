@@ -22,28 +22,27 @@ class Config:
     OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "google/gemma-4-26b-a4b-it:free")
 
     @staticmethod
-    def get_cors_origins_regex() -> str:
+    def get_cors_origins() -> list:
         """
-        Build regex pattern for allowed CORS origins.
+        Build list of allowed CORS origins.
         Allows:
         - Local development (localhost, 127.0.0.1)
-        - Any Vercel deployment (*.vercel.app)
+        - All Vercel deployments (*.vercel.app)
         - Custom domain from FRONTEND_URL env variable (if set)
         """
-        patterns = [
-            r"http://localhost(:\d+)?",
-            r"http://127\.0\.0\.1(:\d+)?",
-            r"https://.*\.vercel\.app",
+        origins = [
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:5173",
+            "https://*.vercel.app",  # Flask-CORS will match this pattern
         ]
         
         custom_domain = os.getenv("FRONTEND_URL", "")
         if custom_domain:
-            # Escape dots in custom domain for regex
-            escaped_domain = custom_domain.replace(".", r"\.")
-            patterns.append(f"https://{escaped_domain}")
+            origins.append(custom_domain)
         
-        # Combine patterns with OR
-        return "(" + "|".join(patterns) + ")"
+        return origins
 
     @staticmethod
     def init_upload_folder():
